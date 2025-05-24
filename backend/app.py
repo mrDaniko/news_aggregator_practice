@@ -6,7 +6,17 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import config
 from contextlib import asynccontextmanager
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    student_id = getattr(config, "STUDENT_ID", None)
+    sources = getattr(config, "SOURCES", [])
+    if student_id and isinstance(sources, list):
+        sources_store[student_id] = list(sources)
+        print(f"[startup] loaded {len(sources)} feeds for {student_id}")
+    yield
+    pass
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -20,18 +30,6 @@ STUDENT_ID = "Shakhvaladov_ba40560e"
 news_store = {STUDENT_ID: []}
 sources_store = {STUDENT_ID: []}
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    student_id = getattr(config, "STUDENT_ID", None)
-    sources = getattr(config, "SOURCES", [])
-    if student_id and isinstance(sources, list):
-        sources_store[student_id] = list(sources)
-        print(f"[startup] loaded {len(sources)} feeds for {student_id}")
-    yield
-    pass
-
-app = FastAPI(lifespan=lifespan)
 
 fake_users_db = {
     "Shakhvaladov_ba40560e": {
@@ -135,3 +133,11 @@ async def add_source(student_id: str, source: dict, current_user: dict = Depends
         sources_store.setdefault(student_id, []).append(url)
         return {"added": url}
     raise HTTPException(status_code=400, detail="Invalid source URL")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://127.0.0.1:8001"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+print("CORS middleware configured")
