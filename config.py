@@ -1,2 +1,6 @@
 STUDENT_ID = "Shakhvaladov_ba40560e"
-SOURCES = ["https://rss.nytimes.com/services/xml/rss/nyt/World.xml"]  # Переконайтеся, що є хоча б один валідний RSS-URL
+SOURCES = [
+    "http://rss.cnn.com/rss/cnn_topstories.rss",
+    "http://feeds.bbci.co.uk/news/rss.xml",
+    "https://www.reuters.com/rss",
+]
