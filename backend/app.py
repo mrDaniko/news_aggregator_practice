@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 analyzer = SentimentIntensityAnalyzer()
 app = FastAPI()
 
+# Налаштування CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://127.0.0.1:8001", "http://localhost:8001"],
@@ -16,6 +17,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Тестова база користувачів для /token
+fake_users_db = {
+    STUDENT_ID: {
+        "username": STUDENT_ID,
+        "full_name": STUDENT_ID,
+        "hashed_password": "password123",  # нерекомендовано зберігати так на проді
+        "disabled": False,
+    }
+}
+
+# Пам'ять для статей
 news_store = {STUDENT_ID: []}
 
 @app.post("/fetch/{student_id}")
