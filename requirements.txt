@@ -2,3 +2,8 @@ fastapi==0.115.2
 uvicorn==0.32.0
 feedparser==6.0.11
 vaderSentiment==3.3.2
+
+python-multipart          # для роботи з form data (якщо потрібні форми)
+python-jose[cryptography] # для JWT (авторизації)
+passlib[bcrypt]          # для шифрування паролів
+bcrypt==3.2.0            # конкретна версія bcrypt (для стабільності)

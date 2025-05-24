@@ -1,14 +1,14 @@
 import config
 from config import STUDENT_ID
 import feedparser
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends, status
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 analyzer = SentimentIntensityAnalyzer()
 app = FastAPI()
 
-# Налаштування CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://127.0.0.1:8001", "http://localhost:8001"],
@@ -17,17 +17,36 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Тестова база користувачів для /token
 fake_users_db = {
     STUDENT_ID: {
         "username": STUDENT_ID,
         "full_name": STUDENT_ID,
-        "hashed_password": "password123",  # нерекомендовано зберігати так на проді
+        "hashed_password": "password123",
         "disabled": False,
     }
 }
 
-# Пам'ять для статей
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+def verify_password(plain_password, hashed_password):
+    return plain_password == hashed_password
+
+def get_user(db, username: str):
+    if username in db:
+        return db[username]
+    return None
+
+@app.post("/token")
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = get_user(fake_users_db, form_data.username)
+    if not user or not verify_password(form_data.password, user["hashed_password"]):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return {"access_token": user["username"], "token_type": "bearer"}
+
 news_store = {STUDENT_ID: []}
 
 @app.post("/fetch/{student_id}")
@@ -45,7 +64,7 @@ def fetch_news(student_id: str):
                 "published": entry.get("published", "")
             })
             fetched += 1
-    print(f"Fetched {fetched} articles for student_id: {student_id}")
+        print(f"Fetched {fetched} articles for student_id: {student_id}")
     return {"fetched": fetched}
 
 @app.get("/news/{student_id}")
