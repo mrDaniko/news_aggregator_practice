@@ -1,4 +1,4 @@
-async function fetchNews() {
+async function loadData() {
     try {
         // Крок 1: Отримання токена
         const tokenResponse = await fetch('http://127.0.0.1:8000/token', {
@@ -9,26 +9,29 @@ async function fetchNews() {
             body: 'username=Shakhvaladov_ba40560e&password=password123'
         });
         if (!tokenResponse.ok) {
-            throw new Error('Failed to get token');
+            throw new Error(`Failed to get token: ${tokenResponse.status}`);
         }
         const tokenData = await tokenResponse.json();
         const token = tokenData.access_token;
 
         // Крок 2: Запит до /fetch із токеном
-        const response = await fetch('http://127.0.0.1:8000/fetch/Shakhvaladov_ba40560e', {
+        const fetchResponse = await fetch('http://127.0.0.1:8000/fetch/Shakhvaladov_ba40560e', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`
             }
         });
-        if (!response.ok) {
-            throw new Error('Failed to fetch news');
+        if (!fetchResponse.ok) {
+            throw new Error(`Failed to fetch news: ${fetchResponse.status}`);
         }
-        const data = await response.json();
-        console.log(`Fetched ${data.fetched} articles`);
+        const fetchData = await fetchResponse.json();
+        console.log(`Fetched ${fetchData.fetched} articles`);
 
         // Крок 3: Отримання новин
         const newsResponse = await fetch('http://127.0.0.1:8000/news/Shakhvaladov_ba40560e');
+        if (!newsResponse.ok) {
+            throw new Error(`Failed to get news: ${newsResponse.status}`);
+        }
         const newsData = await newsResponse.json();
         updateTable(newsData.articles);
 
@@ -36,10 +39,13 @@ async function fetchNews() {
         const analyzeResponse = await fetch('http://127.0.0.1:8000/analyze/Shakhvaladov_ba40560e', {
             method: 'POST'
         });
+        if (!analyzeResponse.ok) {
+            throw new Error(`Failed to analyze: ${analyzeResponse.status}`);
+        }
         const analyzeData = await analyzeResponse.json();
         updateChart(analyzeData.articles);
     } catch (error) {
-        console.error('Error:', error);
+        console.error('Помилка під час завантаження даних:', error);
     }
 }
 
@@ -73,4 +79,4 @@ function updateChart(articles) {
     });
 }
 
-document.getElementById('fetch-button').addEventListener('click', fetchNews);
+document.getElementById('fetch-button').addEventListener('click', loadData);
