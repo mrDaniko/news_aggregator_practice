@@ -1,101 +1,76 @@
-// Глобальні змінні
-let allArticles = [];
+async function fetchNews() {
+    try {
+        // Крок 1: Отримання токена
+        const tokenResponse = await fetch('http://127.0.0.1:8000/token', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'username=Shakhvaladov_ba40560e&password=password123'
+        });
+        if (!tokenResponse.ok) {
+            throw new Error('Failed to get token');
+        }
+        const tokenData = await tokenResponse.json();
+        const token = tokenData.access_token;
 
-const filterSelect = document.getElementById("filter-select");
-const tableBody = document.querySelector("#articles-table tbody");
-const canvasCtx = document.getElementById("sentiment-chart").getContext("2d");
-const fetchButton = document.getElementById("fetch-news-btn");
+        // Крок 2: Запит до /fetch із токеном
+        const response = await fetch('http://127.0.0.1:8000/fetch/Shakhvaladov_ba40560e', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        if (!response.ok) {
+            throw new Error('Failed to fetch news');
+        }
+        const data = await response.json();
+        console.log(`Fetched ${data.fetched} articles`);
 
-// 1) Функція завантаження даних
-async function loadData() {
-  try {
-    // 1.1) Підтягуємо новини
-    const fetchResponse = await fetch(`${API_BASE}/fetch/${STUDENT_ID}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" }
-    });
-    if (!fetchResponse.ok) {
-      throw new Error(`Failed to fetch news: ${fetchResponse.status} ${fetchResponse.statusText}`);
+        // Крок 3: Отримання новин
+        const newsResponse = await fetch('http://127.0.0.1:8000/news/Shakhvaladov_ba40560e');
+        const newsData = await newsResponse.json();
+        updateTable(newsData.articles);
+
+        // Крок 4: Аналіз тональності
+        const analyzeResponse = await fetch('http://127.0.0.1:8000/analyze/Shakhvaladov_ba40560e', {
+            method: 'POST'
+        });
+        const analyzeData = await analyzeResponse.json();
+        updateChart(analyzeData.articles);
+    } catch (error) {
+        console.error('Error:', error);
     }
-
-    // 1.2) Аналіз тональності
-    const analyzeResponse = await fetch(`${API_BASE}/analyze/${STUDENT_ID}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" }
-    });
-    if (!analyzeResponse.ok) {
-      throw new Error(`Failed to analyze: ${analyzeResponse.status} ${analyzeResponse.statusText}`);
-    }
-    const data = await analyzeResponse.json();
-
-    // 1.3) Зберігаємо у allArticles
-    allArticles = data.articles.map(a => ({
-      ...a,
-      date: a.published ? new Date(a.published) : new Date()
-    }));
-
-    // Рендеримо вміст
-    render();
-  } catch (err) {
-    console.error("Помилка під час завантаження даних:", err);
-    tableBody.innerHTML = `<tr><td colspan="3">Помилка: ${err.message}</td></tr>`;
-  }
 }
 
-// 2) Функція рендеру таблиці та діаграми
-function render() {
-  const filter = filterSelect.value;
-  const filtered = allArticles.filter(a =>
-    filter === "all" ? true : a.sentiment === filter
-  );
-
-  // 2.1) Оновлюємо таблицю
-  tableBody.innerHTML = filtered
-    .sort((a, b) => b.date - a.date)
-    .map(a => `
-      <tr>
-        <td>${a.date.toLocaleString()}</td>
-        <td>${a.sentiment}</td>
-        <td><a href="${a.link}" target="_blank">${a.title}</a></td>
-      </tr>
-    `).join("");
-
-  // 2.2) Підрахунок для діаграми
-  const counts = { positive: 0, neutral: 0, negative: 0 };
-  filtered.forEach(a => counts[a.sentiment]++);
-  chart.data.datasets[0].data = [
-    counts.positive,
-    counts.neutral,
-    counts.negative
-  ];
-  chart.update();
+function updateTable(articles) {
+    const table = document.getElementById('news-table').getElementsByTagName('tbody')[0];
+    table.innerHTML = '';
+    articles.forEach(article => {
+        const row = table.insertRow();
+        row.insertCell(0).textContent = article.title;
+        row.insertCell(1).textContent = article.published;
+        row.insertCell(2).textContent = article.sentiment || 'N/A';
+    });
 }
 
-// 3) Ініціалізація Chart.js (кругова діаграма)
-const chart = new Chart(canvasCtx, {
-  type: 'pie',
-  data: {
-    labels: ['Позитивні', 'Нейтральні', 'Негативні'],
-    datasets: [{
-      data: [0, 0, 0],
-      backgroundColor: ['#4caf50', '#ffca28', '#f44336']
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: true,
-    aspectRatio: 2,
-    plugins: {
-      legend: { position: 'top' }
-    }
-  }
-});
+function updateChart(articles) {
+    const ctx = document.getElementById('sentiment-chart').getContext('2d');
+    const sentiments = { positive: 0, neutral: 0, negative: 0 };
+    articles.forEach(article => {
+        sentiments[article.sentiment]++;
+    });
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Positive', 'Neutral', 'Negative'],
+            datasets: [{
+                label: 'Sentiment Distribution',
+                data: [sentiments.positive, sentiments.neutral, sentiments.negative],
+                backgroundColor: ['#4caf50', '#ffeb3b', '#f44336']
+            }]
+        }
+    });
+}
 
-// 4) Обробник зміни фільтра
-filterSelect.addEventListener("change", render);
-
-// 5) Обробник кнопки Fetch News
-fetchButton.addEventListener("click", loadData);
-
-// 6) Завантаження даних при старті
-window.addEventListener("load", loadData);
+document.getElementById('fetch-button').addEventListener('click', fetchNews);
