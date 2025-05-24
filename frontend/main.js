@@ -1,4 +1,7 @@
+console.log('main.js loaded');
+
 async function loadData() {
+    console.log('loadData called');
     try {
         const tokenResponse = await fetch('http://127.0.0.1:8000/token', {
             method: 'POST',
@@ -37,9 +40,10 @@ async function loadData() {
             method: 'POST'
         });
         if (!analyzeResponse.ok) {
-            throw new Error(`Failed to analyze: ${analyzeResponse.status}`);
+            throw new Error(`Failed to analyze: ${fetchResponse.status}`);
         }
         const analyzeData = await analyzeResponse.json();
+        updateTable(analyzeData.articles);
         updateChart(analyzeData.articles);
     } catch (error) {
         console.error('Помилка під час завантаження даних:', error);
@@ -47,6 +51,7 @@ async function loadData() {
 }
 
 function updateTable(articles) {
+    console.log('Updating table with', articles.length, 'articles');
     const table = document.getElementById('news-table').getElementsByTagName('tbody')[0];
     table.innerHTML = '';
     articles.forEach(article => {
@@ -58,12 +63,14 @@ function updateTable(articles) {
 }
 
 function updateChart(articles) {
+    console.log('Updating chart');
     const ctx = document.getElementById('sentiment-chart').getContext('2d');
     const sentiments = { positive: 0, neutral: 0, negative: 0 };
     articles.forEach(article => {
-        sentiments[article.sentiment]++;
+        if (article.sentiment) sentiments[article.sentiment]++;
     });
-    new Chart(ctx, {
+    if (window.sentimentChart) window.sentimentChart.destroy();
+    window.sentimentChart = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: ['Positive', 'Neutral', 'Negative'],
@@ -76,4 +83,7 @@ function updateChart(articles) {
     });
 }
 
-document.getElementById('fetch-button').addEventListener('click', loadData);
+window.addEventListener('load', () => {
+    console.log('Window loaded, starting loadData');
+    loadData();
+});

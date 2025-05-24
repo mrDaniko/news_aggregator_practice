@@ -1,40 +1,32 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Дашборд новин</title>
-  <link rel="icon" href="data:;base64,iVBORw0KGgo=">
-  <link rel="stylesheet" href="styles.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Aggregator</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="icon" href="data:,">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        canvas { max-width: 600px; margin-top: 20px; }
+    </style>
 </head>
 <body>
-  <h1>Дашборд новин</h1>
-  <button id="fetch-news-btn">Fetch News</button>
-  <label for="filter-select">Фільтр тональності:</label>
-  <select id="filter-select">
-    <option value="all">Усі</option>
-    <option value="positive">Позитивні</option>
-    <option value="neutral">Нейтральні</option>
-    <option value="negative">Негативні</option>
-  </select>
-  <div class="chart-container">
+    <h1>News Aggregator Dashboard</h1>
+    <table id="news-table">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Published</th>
+                <th>Sentiment</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
     <canvas id="sentiment-chart"></canvas>
-  </div>
-  <table id="articles-table">
-    <thead>
-      <tr>
-        <th>Дата</th>
-        <th>Тональність</th>
-        <th>Заголовок</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-  <script>
-    const STUDENT_ID = "Shakhvaladov_ba40560e";
-    const API_BASE = "http://localhost:8000";
-  </script>
-  <script src="main.js"></script>
+    <script src="main.js"></script>
 </body>
 </html>
