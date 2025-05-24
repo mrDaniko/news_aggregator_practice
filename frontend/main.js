@@ -1,6 +1,5 @@
 async function loadData() {
     try {
-        // Крок 1: Отримання токена
         const tokenResponse = await fetch('http://127.0.0.1:8000/token', {
             method: 'POST',
             headers: {
@@ -13,8 +12,8 @@ async function loadData() {
         }
         const tokenData = await tokenResponse.json();
         const token = tokenData.access_token;
+        console.log('Token:', token);
 
-        // Крок 2: Запит до /fetch із токеном
         const fetchResponse = await fetch('http://127.0.0.1:8000/fetch/Shakhvaladov_ba40560e', {
             method: 'POST',
             headers: {
@@ -27,7 +26,6 @@ async function loadData() {
         const fetchData = await fetchResponse.json();
         console.log(`Fetched ${fetchData.fetched} articles`);
 
-        // Крок 3: Отримання новин
         const newsResponse = await fetch('http://127.0.0.1:8000/news/Shakhvaladov_ba40560e');
         if (!newsResponse.ok) {
             throw new Error(`Failed to get news: ${newsResponse.status}`);
@@ -35,7 +33,6 @@ async function loadData() {
         const newsData = await newsResponse.json();
         updateTable(newsData.articles);
 
-        // Крок 4: Аналіз тональності
         const analyzeResponse = await fetch('http://127.0.0.1:8000/analyze/Shakhvaladov_ba40560e', {
             method: 'POST'
         });
