@@ -29,18 +29,11 @@ async function loadData() {
         const fetchData = await fetchResponse.json();
         console.log(`Fetched ${fetchData.fetched} articles`);
 
-        const newsResponse = await fetch('http://127.0.0.1:8000/news/Shakhvaladov_ba40560e');
-        if (!newsResponse.ok) {
-            throw new Error(`Failed to get news: ${newsResponse.status}`);
-        }
-        const newsData = await newsResponse.json();
-        updateTable(newsData.articles);
-
         const analyzeResponse = await fetch('http://127.0.0.1:8000/analyze/Shakhvaladov_ba40560e', {
             method: 'POST'
         });
         if (!analyzeResponse.ok) {
-            throw new Error(`Failed to analyze: ${fetchResponse.status}`);
+            throw new Error(`Failed to analyze: ${analyzeResponse.status}`);
         }
         const analyzeData = await analyzeResponse.json();
         updateTable(analyzeData.articles);
@@ -57,8 +50,14 @@ function updateTable(articles) {
     articles.forEach(article => {
         const row = table.insertRow();
         row.insertCell(0).textContent = article.title;
-        row.insertCell(1).textContent = article.published;
-        row.insertCell(2).textContent = article.sentiment || 'N/A';
+        const linkCell = row.insertCell(1);
+        const link = document.createElement('a');
+        link.href = article.link;
+        link.textContent = article.link;
+        link.target = '_blank';
+        linkCell.appendChild(link);
+        row.insertCell(2).textContent = article.published;
+        row.insertCell(3).textContent = article.sentiment || 'N/A';
     });
 }
 
@@ -76,7 +75,7 @@ function updateChart(articles) {
             labels: ['Positive', 'Neutral', 'Negative'],
             datasets: [{
                 label: 'Sentiment Distribution',
-                data: [sentiments.positive, sentiments.neutral, sentiments.negative],
+                data: [sentiments.positive, sentiments.neutral, sentiments.neutral],
                 backgroundColor: ['#4caf50', '#ffeb3b', '#f44336']
             }]
         }
